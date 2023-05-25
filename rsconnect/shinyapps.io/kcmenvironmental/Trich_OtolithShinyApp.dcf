@@ -1,0 +1,13 @@
+name: Trich_OtolithShinyApp
+title: Trich_OtolithShinyApp
+username:
+account: kcmenvironmental
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9145483
+bundleId: 7263343
+url: https://kcmenvironmental.shinyapps.io/Trich_OtolithShinyApp/
+when: 1685033048.89325
+lastSyncTime: 1685033048.89326
+asMultiple: FALSE
+asStatic: FALSE
