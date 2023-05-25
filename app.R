@@ -49,8 +49,8 @@ ui <- fluidPage(
   
   fluidRow(uiOutput(outputId = "dropdown")), 
   fluidRow(
-    column(6, plotOutput(outputId = "plot_Zn")), 
-    column(6, fluidRow(plotOutput(outputId = "plot_SrBa")))))
+    column(6, girafeOutput(outputId = "plot_Zn")), 
+    column(6, fluidRow(girafeOutput(outputId = "plot_SrBa")))))
   
 # Define server logic ----
 server <- function(input, output) {
@@ -143,18 +143,21 @@ output$download_btn <- downloadHandler(
   })
   
   ### Create zinc plot ----
-  output$plot_Zn <- renderPlot({
+  output$plot_Zn <- renderGirafe({
     
     req(input$file)
     data <- readxl::read_excel(input$file$datapath, 
                                 sheet = input$sampleIDs, 
                                 range = readxl::cell_cols(1:19))
     
-   ggplot() + 
-    geom_line(data = data, 
+  data$tp <- (paste0(round(data$time, 0), " s \n", round(data$`66Zn`, 0), " ppm"))
+    
+   plot_Zn <- ggplot(data = data, 
                aes(x = as.numeric(time), 
-                   y = as.numeric(`66Zn`)), 
-               colour = "darkgreen") + 
+                   y = as.numeric(`66Zn`))) + 
+    geom_line(colour = "darkgreen") + 
+    geom_point_interactive(aes(tooltip = tp), 
+                           alpha = 0) +
     theme_bw() +
     labs(y = "Zinc (ppm)", 
          x = "Time (s)", 
@@ -163,25 +166,41 @@ output$download_btn <- downloadHandler(
           plot.title = element_text(face = "bold", 
                                     size = 14)) +
     scale_y_continuous(limits = c(0, 250))
-  }, bg = "transparent")
+   
+   ggiraph(code = print(plot_Zn))
+   
+  })
+  
   
   ### Create Sr Ba plot ----
-  output$plot_SrBa <- renderPlot({
+  output$plot_SrBa <- renderGirafe({
     
     req(input$file)
     data <- readxl::read_excel(input$file$datapath, 
                                sheet = input$sampleIDs, 
                                range = readxl::cell_cols(1:19))
     
-    ggplot() + 
+    data$tp <- (paste0(round(data$time, 0), " s \n", round(data$`88Sr`, 0), " ppm Sr \n", round(data$`137Ba`, 1), " ppm Ba"))
+    
+    plot_SrBa <- ggplot() + 
       geom_line(data = data, 
                  aes(x = as.numeric(time), 
                      y = as.numeric(`88Sr`), 
                      colour = "Strontium")) + 
+      geom_point_interactive(data = data, 
+                             alpha = 0, # set totally transparent so viewer sees only geom_line with tooltip and does not see geom_point. 
+                             aes(x = as.numeric(time), 
+                                 y = as.numeric(`88Sr`), 
+                                 tooltip = tp)) + 
       geom_line(data = data, 
                  aes(x = as.numeric(time), 
                      y = as.numeric(`137Ba`)*40, 
                      colour = "Barium")) + 
+      geom_point_interactive(data = data, # duplicates tooltip for Ba series, so tooltip will show when hovering over any data point
+                             alpha = 0, 
+                             aes(x = as.numeric(time), 
+                                 y = as.numeric(`137Ba`)*40, 
+                                 tooltip = tp)) + 
       theme_bw() +
       labs(x = "Time (s)", 
            title = input$sampleIDs) +
@@ -196,7 +215,10 @@ output$download_btn <- downloadHandler(
       scale_y_continuous(name = "Strontium (ppm)",
                          limits = c(0, 2000), 
                          sec.axis = sec_axis(~ . /40, name = "Barium (ppm)"))
-  }, bg = "transparent")
+    
+    ggiraph(code = print(plot_SrBa))
+    
+  })
 }
 
 
